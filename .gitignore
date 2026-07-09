@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+*.log
+.dbt/
+dbt_packages/
+target/
+logs/
+airflow/logs/
+airflow/plugins/
+airflow_pg_data/

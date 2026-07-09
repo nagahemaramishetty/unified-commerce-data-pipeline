@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: int_orders_validated
+    description: >
+      Orders joined to customer and product dimensions, with is_valid_customer
+      and is_valid_product flags surfacing the orphaned foreign key issue from
+      web_platform. Category, unit_price, unit_cost, and region are pulled in
+      here ahead of the marts layer as part of the deliberate denormalization
+      decision documented in fct_orders.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null

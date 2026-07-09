@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Standardized customer records, one row per customer.
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_products
+    description: Standardized product records, one row per product.
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_orders
+    description: >
+      Cleaned order records. Dates standardized to a single DATE type across
+      both source systems. Retry-bug duplicates from legacy_pos removed
+      (verified by the unique test on order_id below, since the raw source
+      table intentionally contains duplicate order_ids). Orphaned customer_id
+      and product_id references from web_platform are NOT filtered at this
+      layer, that happens in the intermediate layer, since staging should
+      reflect cleaned but still complete data.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: order_date
+        tests:
+          - not_null

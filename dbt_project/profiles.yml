@@ -1,0 +1,24 @@
+# profiles.yml (for the Dockerized Airflow environment only)
+#
+# This file is intentionally safe to commit: it contains no literal credentials,
+# only references to environment variables (via dbt's env_var() function), which
+# are supplied by docker-compose.yaml / airflow/.env at container runtime.
+#
+# This is DIFFERENT from ~/.dbt/profiles.yml on your Mac, which is used when you
+# run `dbt run` directly from your terminal outside Docker. That one lives
+# outside the repo on purpose, since dbt's default profile location isn't
+# project-local. This one is used only when dbt runs inside the Airflow
+# container, where DBT_PROFILES_DIR points here.
+
+unified_commerce:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('PGHOST', 'host.docker.internal') }}"
+      port: "{{ env_var('PGPORT', '5432') | as_number }}"
+      user: "{{ env_var('PGUSER') }}"
+      password: "{{ env_var('PGPASSWORD', '') }}"
+      dbname: "{{ env_var('PGDATABASE', 'unified_commerce') }}"
+      schema: dbt_dev
+      threads: 4

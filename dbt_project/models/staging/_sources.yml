@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: >
+      Landing zone tables loaded as-is from the two simulated source systems
+      (legacy_pos and web_platform) via extraction/load_raw_to_postgres.py.
+      No cleaning has been applied here. Known issues in this layer: duplicate
+      order_ids from a legacy_pos retry bug, mixed date formats across
+      source_system, orphaned customer_id/product_id references from web_platform,
+      and late-arriving records. All of these are addressed in the staging layer.
+    tables:
+      - name: customers
+      - name: products
+      - name: orders_raw

@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: One row per customer, cleaned and typed.
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    description: One row per product, cleaned and typed.
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_orders
+    description: >
+      One row per valid order (orphaned foreign key records excluded, see
+      int_orders_validated). Denormalizes category and region for BI query
+      performance, a deliberate tradeoff documented in fct_orders.sql.
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      - name: product_id
+        tests:
+          - relationships:
+              to: ref('dim_products')
+              field: product_id
+
+  - name: mart_monthly_kpis
+    description: >
+      Monthly revenue, units, and margin by region and category. Single
+      source of truth for all BI deliverables (Power BI, Tableau, Excel).

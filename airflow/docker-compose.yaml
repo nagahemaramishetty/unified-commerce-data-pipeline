@@ -1,0 +1,93 @@
+# docker-compose.yaml
+#
+# Runs Apache Airflow locally using Docker, with the LocalExecutor (simpler than
+# the default CeleryExecutor setup Apache's official quickstart uses, since we
+# don't need distributed task execution for a single-laptop portfolio project).
+#
+# Three services:
+#   - postgres          : a small dedicated database Airflow uses internally to
+#                          track DAG runs, task history, and scheduling state.
+#                          This is SEPARATE from the unified_commerce database
+#                          our pipeline uses, this one is just for Airflow's
+#                          own bookkeeping.
+#   - airflow-init       : runs once, sets up Airflow's internal database and
+#                          creates the admin login, then exits.
+#   - airflow-webserver  : the dashboard you view in your browser at
+#                          localhost:8080
+#   - airflow-scheduler  : the process that actually watches for DAGs and
+#                          triggers task runs on schedule.
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    PGHOST: host.docker.internal
+    PGPORT: "5432"
+    PGDATABASE: unified_commerce
+    PGUSER: ${PGUSER}
+    PGPASSWORD: ${PGPASSWORD}
+    DBT_PROFILES_DIR: /opt/project/dbt_project
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ../:/opt/project   # mounts the whole repo so DAG tasks can reach dbt_project, sql, etc.
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --firstname admin \
+          --lastname admin \
+          --role Admin \
+          --email admin@example.com \
+          --password admin
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  airflow_pg_data:
