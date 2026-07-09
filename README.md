@@ -1,5 +1,7 @@
 # 🔗 Unified Commerce Data Pipeline: End-to-End Analytics Platform for Multi-Source E-Commerce Data
 
+![Unified Data Pipeline Architecture](pipeline-architecture.webp)
+
 _Reconciling messy, real-world commerce data into a clean, tested, business-ready warehouse, built to mirror how a production analytics team actually works._
 
 ---
